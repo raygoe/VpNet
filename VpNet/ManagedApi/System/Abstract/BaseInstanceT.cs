@@ -1900,8 +1900,8 @@ namespace VpNet.Abstract
             int length;
             IntPtr data = Functions.vp_data(sender, Attributes.TerrainNodeData, out length);
             NativeApi.TerrainCell TData;
-            ITerrainCell[] TCells = new ITerrainCell[length];
-            for (int i = 0; i < length; ++i)
+            ITerrainCell[] TCells = new ITerrainCell[64];
+            for (int i = 0; i < 64; ++i)
             {
                 TData = (NativeApi.TerrainCell)Marshal.PtrToStructure(data, typeof(NativeApi.TerrainCell));
                 TCells[i] = new TerrainCell
