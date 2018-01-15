@@ -57,6 +57,7 @@ namespace VpNet.Abstract
         internal abstract event EventDelegate OnTeleportNativeEvent;
         internal abstract event EventDelegate OnUserAttributesNativeEvent;
         internal abstract event EventDelegate OnJoinNativeEvent;
+        internal abstract event EventDelegate OnTerrainNodeNativeEvent;
 
         internal abstract event CallbackDelegate OnObjectCreateCallbackNativeEvent;
         internal abstract event CallbackDelegate OnObjectChangeCallbackNativeEvent;

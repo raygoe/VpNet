@@ -23,11 +23,13 @@ ____   ___.__         __               .__    __________                        
 */
 #endregion
 
+using VpNet.Interfaces;
+
 namespace VpNet.Abstract
 {
     public abstract class BaseTerrain : ITerrain
     {
-        public ushort Data { get; set; }
+        public ITerrainCell[] Cells { get; set; }
         public int NodeX { get; set; }
         public int NodeZ { get; set; }
         public int NodeRevision { get; set; }

@@ -24,13 +24,14 @@ ____   ___.__         __               .__    __________                        
 #endregion
 
 using System.Xml.Serialization;
+using VpNet.Interfaces;
 
 namespace VpNet.Abstract
 {
     public interface ITerrain
     {
         [XmlAttribute]
-        ushort Data { get; set; }
+        ITerrainCell[] Cells { get; set; }
         [XmlAttribute]
         int NodeX { get; set; }
         [XmlAttribute]

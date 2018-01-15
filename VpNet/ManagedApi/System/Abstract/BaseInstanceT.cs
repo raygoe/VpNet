@@ -252,6 +252,7 @@ namespace VpNet.Abstract
             OnTeleportNativeEvent += OnTeleportNative;
             OnUserAttributesNativeEvent += OnUserAttributesNative;
             OnJoinNativeEvent += OnJoinNative;
+            OnTerrainNodeNativeEvent += OnTerrainNodeNative;
 
             OnObjectCreateCallbackNativeEvent += OnObjectCreateCallbackNative;
             OnObjectChangeCallbackNativeEvent += OnObjectChangeCallbackNative;
@@ -292,6 +293,7 @@ namespace VpNet.Abstract
             parentInstance.OnTeleportNativeEvent += OnTeleportNative;
             parentInstance.OnUserAttributesNativeEvent += OnUserAttributesNative;
             parentInstance.OnJoinNativeEvent += OnJoinNative;
+            parentInstance.OnTerrainNodeNativeEvent += OnTerrainNodeNative;
 
             parentInstance.OnObjectCreateCallbackNativeEvent += OnObjectCreateCallbackNative;
             parentInstance.OnObjectChangeCallbackNativeEvent += OnObjectChangeCallbackNative;
@@ -349,6 +351,7 @@ namespace VpNet.Abstract
             SetNativeEvent(Events.Teleport, OnTeleportNative1);
             SetNativeEvent(Events.UserAttributes, OnUserAttributesNative1);
             SetNativeEvent(Events.Join, OnJoinNative1);
+            SetNativeEvent(Events.TerrainNode, OnTerrainNodeNative1);
             SetNativeCallback(Callbacks.ObjectAdd, OnObjectCreateCallbackNative1);
             SetNativeCallback(Callbacks.ObjectChange, OnObjectChangeCallbackNative1);
             SetNativeCallback(Callbacks.ObjectDelete, OnObjectDeleteCallbackNative1);
@@ -428,6 +431,7 @@ namespace VpNet.Abstract
         internal void OnTeleportNative1(IntPtr instance) { lock (this) { OnTeleportNativeEvent(instance); } }
         internal void OnUserAttributesNative1(IntPtr instance) { lock (this){OnUserAttributesNativeEvent(instance);} }
         internal void OnJoinNative1(IntPtr instance) { lock (this) { OnJoinNativeEvent(instance); } }
+        internal void OnTerrainNodeNative1(IntPtr instance) { lock (this) { OnTerrainNodeNativeEvent(instance); } }
 
         #region Methods
 
@@ -1272,6 +1276,7 @@ namespace VpNet.Abstract
 
         public delegate void UniverseDisconnectDelegate(T sender, TUniverseDisconnectEventargs args);
         public delegate void JoinDelegate(T sender, TJoinEventArgs args);
+        public delegate void TerrainNodeDelegate(T sender, TTerainNodeEventArgs args);
 
         public delegate void FriendAddCallbackDelegate(T sender, TFriendAddCallbackEventArgs args);
         public delegate void FriendDeleteCallbackDelegate(T sender, TFriendDeleteCallbackEventArgs args);
@@ -1283,6 +1288,7 @@ namespace VpNet.Abstract
         public event AvatarLeaveDelegate OnAvatarLeave;
         public event AvatarClickDelegate OnAvatarClick;
         public event JoinDelegate OnJoin;
+        public event TerrainNodeDelegate OnTerrainNode;
 
         public event TeleportDelegate OnTeleport;
         public event UserAttributesDelegate OnUserAttributes;
@@ -1887,6 +1893,38 @@ namespace VpNet.Abstract
             });
         }
 
+        private void OnTerrainNodeNative(IntPtr sender)
+        {
+            if (OnTerrainNode == null) return;
+
+            int length;
+            IntPtr data = Functions.vp_data(sender, Attributes.TerrainNodeData, out length);
+            NativeApi.TerrainCell TData;
+            ITerrainCell[] TCells = new ITerrainCell[length];
+            for (int i = 0; i < length; ++i)
+            {
+                TData = (NativeApi.TerrainCell)Marshal.PtrToStructure(data, typeof(NativeApi.TerrainCell));
+                TCells[i] = new TerrainCell
+                {
+                    Height = TData.Height,
+                    Attributes = TData.Attributes
+                };
+                data += Marshal.SizeOf(TData);
+            }
+
+            OnTerrainNode(Implementor, new TTerainNodeEventArgs {
+                Terrain = new TTerrain
+                {
+                    Cells = TCells,
+                    NodeRevision = Functions.vp_int(sender, Attributes.TerrainNodeRevision),
+                    TileX = Functions.vp_int(sender, Attributes.TerrainTileX),
+                    TileZ = Functions.vp_int(sender, Attributes.TerrainTileZ),
+                    NodeX = Functions.vp_int(sender, Attributes.TerrainNodeX),
+                    NodeZ = Functions.vp_int(sender, Attributes.TerrainNodeZ)
+                }
+            });
+        }
+
         #endregion
 
         #region Cleanup
@@ -1916,6 +1954,7 @@ namespace VpNet.Abstract
                 OnFriendAddCallback = null;
                 OnFriendDeleteCallback = null;
                 OnFriendsGetCallback = null;
+                OnTerrainNode = null;
             }
         }
 
@@ -1976,8 +2015,17 @@ namespace VpNet.Abstract
 
         public TResult SetTerrainNode(int tileX, int tileZ, int nodeX, int nodeZ, TerrainCell[,] cells)
         {
-            return new TResult { Rc = Functions.vp_terrain_node_set(_instance, tileX, tileZ, nodeX, nodeZ, cells) };
-
+            NativeApi.TerrainCell[,] nCells = new NativeApi.TerrainCell[cells.GetLength(0),cells.GetLength(1)];
+            for (int z = 0; z < cells.GetLength(0); ++z)
+            {
+                for (int x = 0; x < cells.GetLength(1); ++x)
+                {
+                    nCells[z, x] = new NativeApi.TerrainCell();
+                    nCells[z, x].Height = (float)cells[z, x].Height;
+                    nCells[z, x].Attributes = cells[z, x].Attributes;
+                }
+            }
+            return new TResult { Rc = Functions.vp_terrain_node_set(_instance, tileX, tileZ, nodeX, nodeZ, nCells) };
         }
 
         #endregion
@@ -2002,6 +2050,7 @@ namespace VpNet.Abstract
         override internal event EventDelegate OnTeleportNativeEvent;
         override internal event EventDelegate OnUserAttributesNativeEvent;
         override internal event EventDelegate OnJoinNativeEvent;
+        override internal event EventDelegate OnTerrainNodeNativeEvent;
 
         override internal event CallbackDelegate OnObjectCreateCallbackNativeEvent;
         override internal event CallbackDelegate OnObjectChangeCallbackNativeEvent;

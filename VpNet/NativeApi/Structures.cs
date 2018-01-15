@@ -18,4 +18,11 @@ namespace VpNet.NativeApi
         public SocketTimeoutFunction Timeout;
         public IntPtr Context;
     }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 8)]
+    struct TerrainCell
+    {
+        public float Height;
+        public ushort Attributes;
+    }
 }
